@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EtiketFarmasi — Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/auth.css" />
+  </head>
+  <body>
+    <!-- Background Decorations -->
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-grid"></div>
+
+    <main class="auth-wrapper">
+      <div class="auth-card" id="auth-card">
+        <!-- Brand Header -->
+        <div class="auth-brand">
+          <div class="auth-logo">
+            <i class="fa-solid fa-heart-pulse"></i>
+          </div>
+          <div class="auth-brand-text">
+            <h1>EtiketFarmasi</h1>
+            <p>Sistem Cetak Etiket Farmasi</p>
+          </div>
+        </div>
+
+        <!-- Tab Switch -->
+        <div class="auth-tabs" role="tablist">
+          <button
+            class="auth-tab active"
+            id="tab-login"
+            onclick="switchTab('login')"
+            role="tab"
+            aria-selected="true"
+          >
+            <i class="fa-solid fa-right-to-bracket"></i> Masuk
+          </button>
+          <button
+            class="auth-tab"
+            id="tab-register"
+            onclick="switchTab('register')"
+            role="tab"
+            aria-selected="false"
+          >
+            <i class="fa-solid fa-user-plus"></i> Daftar
+          </button>
+        </div>
+
+        <!-- ===== LOGIN FORM ===== -->
+        <div id="panel-login" class="auth-panel">
+          <div class="alert-box" id="login-alert" hidden></div>
+
+          <div class="lockout-banner" id="lockout-banner" hidden>
+            <i class="fa-solid fa-lock"></i>
+            <div>
+              <strong>Akun Dikunci Sementara</strong>
+              <p>
+                Terlalu banyak percobaan gagal. Silakan tunggu
+                <span id="lockout-timer">--</span> detik.
+              </p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="login-username">Username</label>
+            <div class="input-wrap">
+              <span class="input-icon"><i class="fa-solid fa-user"></i></span>
+              <input
+                type="text"
+                id="login-username"
+                class="control"
+                placeholder="Masukkan username"
+                autocomplete="username"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="login-password">
+              Password
+              <button
+                type="button"
+                class="forgot-link"
+                onclick="showForgotPassword()"
+              >
+                <i class="fa-solid fa-circle-question"></i> Lupa password?
+              </button>
+            </label>
+            <div class="input-wrap">
+              <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
+              <input
+                type="password"
+                id="login-password"
+                class="control"
+                placeholder="Masukkan password"
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="toggle-pw"
+                id="toggle-login-pw"
+                onclick="togglePw('login-password', 'toggle-login-pw')"
+                aria-label="Tampilkan password"
+              >
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+            <div class="attempt-info" id="attempt-info" hidden></div>
+          </div>
+
+          <button
+            class="btn btn-primary btn-full"
+            id="btn-login"
+            onclick="doLogin()"
+          >
+            <i class="fa-solid fa-right-to-bracket"></i> Masuk
+          </button>
+          <p class="keyboard-hint">
+            <i class="fa-regular fa-keyboard"></i>
+            Shortcut: tekan <strong>Enter</strong> untuk lanjut dan masuk.
+          </p>
+
+          <p class="auth-switch">
+            Belum punya akun?
+            <button onclick="switchTab('register')">Daftar sekarang</button>
+          </p>
+        </div>
+
+        <!-- ===== REGISTER FORM ===== -->
+        <div id="panel-register" class="auth-panel" hidden>
+          <div class="alert-box" id="register-alert" hidden></div>
+
+          <div class="field">
+            <label for="reg-username">Username</label>
+            <div class="input-wrap">
+              <span class="input-icon"><i class="fa-solid fa-user"></i></span>
+              <input
+                type="text"
+                id="reg-username"
+                class="control"
+                placeholder="Contoh: budi123"
+                autocomplete="username"
+                oninput="clearRegAlert()"
+              />
+            </div>
+            <small
+              >Minimal 3 karakter, boleh huruf, angka, titik, underscore.</small
+            >
+          </div>
+
+          <div class="field">
+            <label for="reg-fullname">Nama Lengkap</label>
+            <div class="input-wrap">
+              <span class="input-icon"
+                ><i class="fa-solid fa-id-card"></i
+              ></span>
+              <input
+                type="text"
+                id="reg-fullname"
+                class="control"
+                placeholder="Nama lengkap Anda"
+                autocomplete="name"
+                oninput="clearRegAlert()"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="reg-password">Password</label>
+            <div class="input-wrap">
+              <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
+              <input
+                type="password"
+                id="reg-password"
+                class="control"
+                placeholder="Buat password (min. 6 karakter)"
+                autocomplete="new-password"
+                oninput="
+                  checkPasswordStrength();
+                  clearRegAlert();
+                "
+              />
+              <button
+                type="button"
+                class="toggle-pw"
+                id="toggle-reg-pw"
+                onclick="togglePw('reg-password', 'toggle-reg-pw')"
+                aria-label="Tampilkan password"
+              >
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+            <div class="pw-strength-wrap" id="pw-strength-wrap" hidden>
+              <div class="pw-strength-bar">
+                <div class="pw-strength-fill" id="pw-strength-fill"></div>
+              </div>
+              <span class="pw-strength-label" id="pw-strength-label"></span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="reg-confirm">Konfirmasi Password</label>
+            <div class="input-wrap">
+              <span class="input-icon"
+                ><i class="fa-solid fa-lock-open"></i
+              ></span>
+              <input
+                type="password"
+                id="reg-confirm"
+                class="control"
+                placeholder="Ulangi password"
+                autocomplete="new-password"
+                oninput="clearRegAlert()"
+              />
+              <button
+                type="button"
+                class="toggle-pw"
+                id="toggle-reg-confirm"
+                onclick="togglePw('reg-confirm', 'toggle-reg-confirm')"
+                aria-label="Tampilkan password"
+              >
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="doRegister()">
+            <i class="fa-solid fa-user-plus"></i> Buat Akun
+          </button>
+          <p class="keyboard-hint">
+            <i class="fa-regular fa-keyboard"></i>
+            Shortcut: tekan <strong>Enter</strong> untuk lanjut ke kolom
+            berikutnya.
+          </p>
+
+          <p class="auth-switch">
+            Sudah punya akun?
+            <button onclick="switchTab('login')">Masuk sekarang</button>
+          </p>
+        </div>
+
+        <!-- ===== FORGOT / REQUEST GANTI PASSWORD ===== -->
+        <div id="panel-forgot" class="auth-panel" hidden>
+          <div class="back-btn-wrap">
+            <button class="back-btn" onclick="showLoginPanel()">
+              <i class="fa-solid fa-arrow-left"></i> Kembali ke Login
+            </button>
+          </div>
+          <div class="forgot-header">
+            <div class="forgot-icon"><i class="fa-solid fa-key"></i></div>
+            <h2>Verifikasi Password</h2>
+            <p id="forgot-subtitle">
+              Masukkan username Anda. Anda dapat membuat password baru tanpa
+              persetujuan admin.
+            </p>
+          </div>
+          <div class="alert-box" id="forgot-alert" hidden></div>
+
+          <!-- Step 1: Input Username -->
+          <div id="forgot-step-1">
+            <div class="field">
+              <label for="forgot-username">Username Terdaftar</label>
+              <div class="input-wrap">
+                <span class="input-icon"><i class="fa-solid fa-user"></i></span>
+                <input
+                  type="text"
+                  id="forgot-username"
+                  class="control"
+                  placeholder="Masukkan username Anda"
+                />
+              </div>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="doForgot()">
+              <i class="fa-solid fa-paper-plane"></i> Kirim Permintaan
+            </button>
+          </div>
+
+          <!-- Step 2: Input New Password (shown only when resetPasswordAllowed is true) -->
+          <div id="forgot-step-2" hidden>
+            <div class="field">
+              <label for="forgot-new-pw">Password Baru</label>
+              <div class="input-wrap">
+                <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
+                <input
+                  type="password"
+                  id="forgot-new-pw"
+                  class="control"
+                  placeholder="Minimal 6 karakter"
+                />
+                <button
+                  type="button"
+                  class="toggle-pw"
+                  id="toggle-forgot-new-pw"
+                  onclick="togglePw('forgot-new-pw', 'toggle-forgot-new-pw')"
+                  aria-label="Tampilkan password"
+                >
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="forgot-confirm-pw">Konfirmasi Password Baru</label>
+              <div class="input-wrap">
+                <span class="input-icon"
+                  ><i class="fa-solid fa-lock-open"></i
+                ></span>
+                <input
+                  type="password"
+                  id="forgot-confirm-pw"
+                  class="control"
+                  placeholder="Ulangi password baru"
+                />
+                <button
+                  type="button"
+                  class="toggle-pw"
+                  id="toggle-forgot-confirm-pw"
+                  onclick="
+                    togglePw('forgot-confirm-pw', 'toggle-forgot-confirm-pw')
+                  "
+                  aria-label="Tampilkan password"
+                >
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary btn-full"
+              onclick="doResetPassword()"
+            >
+              <i class="fa-solid fa-check"></i> Simpan Password Baru
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- /auth-card -->
+
+      <p class="footer-note">
+        © 2025 EtiketFarmasi · Sistem Cetak Etiket Farmasi · Demo Prototype
+      </p>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" role="alert" aria-live="polite"></div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Jika sudah login, langsung redirect
+        redirectIfLoggedIn();
+
+        // Shortcut Enter mengikuti urutan kolom agar form tetap nyaman dipakai.
+        document.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter") return;
+          const nextFieldById = {
+            "login-username": "login-password",
+            "reg-username": "reg-fullname",
+            "reg-fullname": "reg-password",
+            "reg-password": "reg-confirm",
+            "forgot-new-pw": "forgot-confirm-pw",
+          };
+          const nextId = nextFieldById[e.target.id];
+          if (nextId) {
+            e.preventDefault();
+            document.getElementById(nextId)?.focus();
+            return;
+          }
+
+          const submitActionById = {
+            "login-password": doLogin,
+            "reg-confirm": doRegister,
+            "forgot-username": doForgot,
+            "forgot-confirm-pw": doResetPassword,
+          };
+          const submitAction = submitActionById[e.target.id];
+          if (!submitAction) return;
+          e.preventDefault();
+          submitAction();
+        });
+      });
+    </script>
+  </body>
+</html>

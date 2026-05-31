@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistem Cetak Etiket Farmasi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="css/user.css" />
+</head>
+<body>
+  <!-- Session Guard — Login hanya lewat index.html -->
+  <script src="js/user.js"></script>
+
+  <div id="toast"></div>
+
+  <!-- Login lama telah dihapus. Login hanya lewat index.html -->
+  <!-- label_updated.html hanya berisi proteksi session + aplikasi etiket -->
+
+  <div id="app-container">
+    <aside id="sidebar">
+      <div class="sidebar-head">
+        <div class="brand">
+          <button class="brand-icon" type="button" onclick="toggleSidebar()" title="Buka Sidebar"><i class="fa-solid fa-prescription"></i></button>
+          <span class="brand-text">Etiket Farmasi</span>
+        </div>
+        <button id="sidebar-menu-btn" type="button" onclick="toggleSidebar()" title="Tutup Sidebar"><i class="fa-solid fa-bars"></i></button>
+      </div>
+      <nav class="menu">
+        <button class="menu-item active" type="button" onclick="showSection('dashboard')"><i class="fa-solid fa-chart-simple"></i><span class="menu-text">Dashboard</span></button>
+        <button class="menu-item" type="button" onclick="showSection('cetak-etiket')"><i class="fa-solid fa-print"></i><span class="menu-text">Cetak Etiket</span></button>
+        <button class="menu-item" type="button" onclick="showSection('pasien')"><i class="fa-solid fa-user-injured"></i><span class="menu-text">Data Pasien</span></button>
+        <button class="menu-item" type="button" onclick="showSection('obat')"><i class="fa-solid fa-capsules"></i><span class="menu-text">Data Obat</span></button>
+        <button class="menu-item" type="button" onclick="showSection('poli')"><i class="fa-solid fa-door-open"></i><span class="menu-text">Data Poli</span></button>
+        <button class="menu-item" type="button" onclick="showSection('label-instansi')"><i class="fa-solid fa-hospital"></i><span class="menu-text">Label Instansi</span></button>
+        <button class="menu-item" type="button" onclick="showSection('print-settings')"><i class="fa-solid fa-sliders"></i><span class="menu-text">Pengaturan Print</span></button>
+      </nav>
+      <div class="sidebar-profile">
+        <div class="profile-box">
+          <div class="avatar" id="admin-avatar-initial">U</div>
+          <div class="profile-text">
+            <h4 id="sidebar-admin-name">User</h4>
+            <p id="sidebar-admin-info">Pengguna</p>
+          </div>
+        </div>
+        <button class="btn btn-danger btn-full sidebar-logout-btn" type="button" onclick="logout()">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span class="menu-text">Logout</span>
+        </button>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <main id="main-content">
+      <header class="topbar">
+        <div class="topbar-title">
+          <button class="btn btn-muted btn-icon mobile-menu-btn" type="button" onclick="toggleSidebar()" title="Buka menu"><i class="fa-solid fa-bars"></i></button>
+          <div>
+            <h1 id="page-title">Dashboard</h1>
+            <span id="current-date"></span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-soft" type="button" onclick="showSection('cetak-etiket')"><i class="fa-solid fa-plus"></i> Buat Etiket</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <section id="dashboard" class="section-view active">
+
+          <!-- Welcome Banner -->
+          <div class="card dash-welcome" style="margin-bottom:1rem;">
+            <div class="dash-welcome-bg"></div>
+            <div class="dash-welcome-content">
+              <div>
+                <p class="dash-welcome-label">Selamat datang kembali 👋</p>
+                <h2 class="dash-welcome-title" id="dash-greet-name">USER</h2>
+                <p class="dash-welcome-sub">Buat Cetak Etiket Lebih Cepat, Mudah Dan SATET🌞</p>
+                <div class="dash-welcome-actions">
+                  <button class="btn btn-primary" type="button" onclick="showSection('cetak-etiket')">
+                    <i class="fa-solid fa-print"></i> Cetak Etiket Sekarang
+                  </button>
+                </div>
+              </div>
+              <div class="dash-welcome-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Row -->
+          <div class="stats-grid" style="margin-bottom:1rem;">
+            <div class="stat-card stat-card-v2 anim-fadein" style="animation-delay:.05s">
+              <div class="stat-icon-wrap" style="background:rgba(37,99,235,.1);color:#2563eb"><i class="fa-solid fa-user-injured"></i></div>
+              <div class="stat-info">
+                <p>Total Pasien</p>
+                <strong id="stat-pasien">0</strong>
+              </div>
+            </div>
+            <div class="stat-card stat-card-v2 anim-fadein" style="animation-delay:.1s">
+              <div class="stat-icon-wrap" style="background:rgba(16,185,129,.1);color:#059669"><i class="fa-solid fa-capsules"></i></div>
+              <div class="stat-info">
+                <p>Data Obat</p>
+                <strong id="stat-obat">0</strong>
+              </div>
+            </div>
+            <div class="stat-card stat-card-v2 anim-fadein" style="animation-delay:.15s">
+              <div class="stat-icon-wrap" style="background:rgba(245,158,11,.1);color:#d97706"><i class="fa-solid fa-door-open"></i></div>
+              <div class="stat-info">
+                <p>Poli / Ruangan</p>
+                <strong id="stat-poli">0</strong>
+              </div>
+            </div>
+            <div class="stat-card stat-card-v2 anim-fadein" style="animation-delay:.2s">
+              <div class="stat-icon-wrap" style="background:rgba(139,92,246,.1);color:#7c3aed"><i class="fa-solid fa-print"></i></div>
+              <div class="stat-info">
+                <p>Mode Print</p>
+                <strong id="stat-print">-</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shortcut Cards + Status -->
+          <div class="dash-bottom-grid">
+
+            <!-- Quick Actions -->
+            <div class="card anim-fadein" style="animation-delay:.25s;">
+              <div class="card-head"><h3><i class="fa-solid fa-bolt" style="color:#f59e0b"></i> Akses Cepat</h3></div>
+              <div class="shortcut-grid">
+                <button class="shortcut-card" type="button" onclick="showSection('cetak-etiket')">
+                  <div class="sc-icon" style="background:#dbeafe;color:#2563eb"><i class="fa-solid fa-print"></i></div>
+                  <span>Cetak Etiket</span>
+                </button>
+                <button class="shortcut-card" type="button" onclick="showSection('pasien')">
+                  <div class="sc-icon" style="background:#d1fae5;color:#059669"><i class="fa-solid fa-user-injured"></i></div>
+                  <span>Data Pasien</span>
+                </button>
+                <button class="shortcut-card" type="button" onclick="showSection('obat')">
+                  <div class="sc-icon" style="background:#fef3c7;color:#d97706"><i class="fa-solid fa-capsules"></i></div>
+                  <span>Data Obat</span>
+                </button>
+                <button class="shortcut-card" type="button" onclick="showSection('poli')">
+                  <div class="sc-icon" style="background:#ede9fe;color:#7c3aed"><i class="fa-solid fa-door-open"></i></div>
+                  <span>Data Poli</span>
+                </button>
+                <button class="shortcut-card" type="button" onclick="showSection('label-instansi')">
+                  <div class="sc-icon" style="background:#fce7f3;color:#db2777"><i class="fa-solid fa-hospital"></i></div>
+                  <span>Label Instansi</span>
+                </button>
+                <button class="shortcut-card" type="button" onclick="showSection('print-settings')">
+                  <div class="sc-icon" style="background:#e0f2fe;color:#0284c7"><i class="fa-solid fa-sliders"></i></div>
+                  <span>Pengaturan Print</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Status Panel -->
+            <div class="card anim-fadein" style="animation-delay:.3s;">
+              <div class="card-head"><h3><i class="fa-solid fa-circle-info" style="color:#2563eb"></i> Status Aplikasi</h3></div>
+              <div class="status-list">
+                <div class="status-row">
+                  <span class="status-dot dot-green"></span>
+                  <span class="status-label">Sistem</span>
+                  <span class="status-val">Aktif & Siap</span>
+                </div>
+                <div class="status-row">
+                  <span class="status-dot dot-blue"></span>
+                  <span class="status-label">Label Instansi</span>
+                  <span class="status-val" id="dash-instansi-status">Belum diatur</span>
+                </div>
+                <div class="status-row">
+                  <span class="status-dot dot-blue"></span>
+                  <span class="status-label">Logo RS</span>
+                  <span class="status-val" id="dash-logo-status">Belum diupload</span>
+                </div>
+                <div class="status-row">
+                  <span class="status-dot dot-green"></span>
+                  <span class="status-label">Penyimpanan</span>
+                  <span class="status-val">LocalStorage</span>
+                </div>
+              </div>
+
+              <div class="card-head" style="margin-top:1.2rem;margin-bottom:.6rem;">
+                <h3><i class="fa-solid fa-clock-rotate-left" style="color:#0284c7"></i> Panduan Singkat</h3>
+              </div>
+              <ol class="guide-list">
+                <li><strong>Label Instansi</strong> — isi nama RS dan upload logo</li>
+                <li><strong>Data Pasien / Obat / Poli</strong> — tambah atau import Excel</li>
+                <li><strong>Cetak Etiket</strong> — isi form resep, pilih mode print</li>
+                <li><strong>Pengaturan Print</strong> — pilih ukuran label &amp; cetak</li>
+              </ol>
+            </div>
+          </div>
+
+        </section>
+
+        <section id="cetak-etiket" class="section-view">
+          <div class="card">
+            <div class="card-head">
+              <h2>Form Cetak Etiket</h2>
+              <button class="btn btn-primary" type="button" onclick="preparePrint()"><i class="fa-solid fa-print"></i>Cetak Label</button>
+            </div>
+
+            <span class="section-label"><i class="fa-solid fa-calendar-days"></i> Data Resep</span>
+            <div class="form-grid">
+              <div class="field">
+                <label for="dash-tgl-resep">Tanggal Resep</label>
+                <input class="control" id="dash-tgl-resep" type="date" />
+              </div>
+              <div class="field">
+                <label for="dash-no-registrasi">No. Registrasi</label>
+                <input class="control" id="dash-no-registrasi" type="number" min="0" inputmode="numeric" placeholder="Opsional" />
+              </div>
+              <div class="field">
+                <label for="dash-no-resep">No. Resep / No. SO</label>
+                <input class="control" id="dash-no-resep" type="number" min="0" inputmode="numeric" placeholder="Contoh: 088280" />
+              </div>
+            </div>
+
+            <span class="section-label"><i class="fa-solid fa-user"></i> Data Pasien</span>
+            <div class="form-grid">
+              <div class="field">
+                <label for="dash-norm">No. RM</label>
+                <input class="control" id="dash-norm" type="number" min="0" inputmode="numeric" placeholder="Masukkan angka No. RM" oninput="autoFillPasien(this.value)" />
+              </div>
+              <div class="field">
+                <label for="dash-nama">Nama Pasien</label>
+                <input class="control" id="dash-nama" type="text" placeholder="Otomatis / isi manual" />
+              </div>
+              <div class="field">
+                <label for="dash-poli">Ruangan / Poli</label>
+                <input class="control" id="dash-poli" type="text" list="poli-options" placeholder="Pilih / ketik manual" />
+                <datalist id="poli-options"></datalist>
+              </div>
+            </div>
+
+            <span class="section-label"><i class="fa-solid fa-pills"></i> Data Obat</span>
+            <div class="form-grid">
+              <div class="field">
+                <label for="dash-nama-obat">Nama Obat</label>
+                <input class="control" id="dash-nama-obat" type="text" list="obat-options" placeholder="Pilih / ketik manual" />
+                <datalist id="obat-options"></datalist>
+              </div>
+              <div class="field">
+                <label for="dash-qty">Qty</label>
+                <input class="control" id="dash-qty" type="text" placeholder="Contoh: 10 TAB" />
+              </div>
+              <div class="field">
+                <label for="dash-tgl-bud">ED / BUD</label>
+                <input class="control" id="dash-tgl-bud" type="date" />
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="dash-aturan-minum">Aturan Minum</label>
+                <input class="control" id="dash-aturan-minum" type="text" placeholder="Contoh: 1 X SEHARI 1 TABLET" />
+              </div>
+              <div class="field">
+                <label for="dash-aturan-pakai">Aturan Pakai</label>
+                <input class="control" id="dash-aturan-pakai" type="text" placeholder="Contoh: Sesudah makan" />
+              </div>
+              <div class="field">
+                <label for="dash-keterangan">Keterangan Tambahan</label>
+                <input class="control" id="dash-keterangan" type="text" placeholder="Contoh: Kocok dahulu" />
+              </div>
+            </div>
+
+            <div class="section-label-row">
+              <span class="section-label"><i class="fa-solid fa-clock"></i> Tutorial</span>
+              <div class="field label-picker-field">
+                <label for="minum-label-type">Label</label>
+                <select class="control" id="minum-label-type" onchange="onMinumLabelTypeChange()">
+                  <option value="minum-rs">Label Etiket OBAT</option>
+                  <option value="high-alert">Label HIGH ALERT</option>
+                  <option value="etiket">Label Etiket</option>
+                  <option value="obat-luar">Label Obat Luar</option>
+                  <option value="instruksi">Label Instruksi</option>
+                </select>
+              </div>
+            </div>
+            <div class="minum-form-card">
+              <div class="size-note" id="minum-form-note">Centang baris yang mau dicetak. Nama waktu, jam, angka dosis, dan teks satuan bebas diedit per baris. Contoh satuan: Tab/Caps/Bks, ml, tetes, sendok.</div>
+              <div class="minum-dose-grid" id="minum-dose-grid">
+                <div class="minum-dose-control">
+                  <input type="checkbox" class="minum-time-check minum-row-check" id="minum-pagi" onchange="updatePreview()" title="Tampilkan baris ini" />
+                  <input class="control minum-nama-waktu" id="minum-pagi-label" type="text" value="Pagi" placeholder="Nama" oninput="updatePreview()" />
+                  <div class="minum-time-range"><input class="control minum-jam" id="minum-pagi-jam-awal" type="time" value="06:00" oninput="updatePreview()" title="Jam awal" /><input class="control minum-jam" id="minum-pagi-jam-akhir" type="time" value="07:00" oninput="updatePreview()" title="Jam akhir" /></div>
+                  <input class="control minum-jumlah" id="minum-pagi-jumlah" type="text" inputmode="decimal" placeholder="1" oninput="updatePreview()" />
+                  <input class="control minum-satuan" id="minum-pagi-satuan" type="text" value="Tab/Caps/Bks" placeholder="Tab/Caps/Bks" oninput="updatePreview()" />
+                </div>
+                <div class="minum-dose-control">
+                  <input type="checkbox" class="minum-time-check minum-row-check" id="minum-siang" onchange="updatePreview()" title="Tampilkan baris ini" />
+                  <input class="control minum-nama-waktu" id="minum-siang-label" type="text" value="Siang" placeholder="Nama" oninput="updatePreview()" />
+                  <div class="minum-time-range"><input class="control minum-jam" id="minum-siang-jam-awal" type="time" value="11:00" oninput="updatePreview()" title="Jam awal" /><input class="control minum-jam" id="minum-siang-jam-akhir" type="time" value="12:00" oninput="updatePreview()" title="Jam akhir" /></div>
+                  <input class="control minum-jumlah" id="minum-siang-jumlah" type="text" inputmode="decimal" placeholder="1" oninput="updatePreview()" />
+                  <input class="control minum-satuan" id="minum-siang-satuan" type="text" value="Tab/Caps/Bks" placeholder="Tab/Caps/Bks" oninput="updatePreview()" />
+                </div>
+                <div class="minum-dose-control">
+                  <input type="checkbox" class="minum-time-check minum-row-check" id="minum-sore" onchange="updatePreview()" title="Tampilkan baris ini" />
+                  <input class="control minum-nama-waktu" id="minum-sore-label" type="text" value="Sore" placeholder="Nama" oninput="updatePreview()" />
+                  <div class="minum-time-range"><input class="control minum-jam" id="minum-sore-jam-awal" type="time" value="16:00" oninput="updatePreview()" title="Jam awal" /><input class="control minum-jam" id="minum-sore-jam-akhir" type="time" value="17:00" oninput="updatePreview()" title="Jam akhir" /></div>
+                  <input class="control minum-jumlah" id="minum-sore-jumlah" type="text" inputmode="decimal" placeholder="1" oninput="updatePreview()" />
+                  <input class="control minum-satuan" id="minum-sore-satuan" type="text" value="Tab/Caps/Bks" placeholder="Tab/Caps/Bks" oninput="updatePreview()" />
+                </div>
+                <div class="minum-dose-control">
+                  <input type="checkbox" class="minum-time-check minum-row-check" id="minum-malam" onchange="updatePreview()" title="Tampilkan baris ini" />
+                  <input class="control minum-nama-waktu" id="minum-malam-label" type="text" value="Malam" placeholder="Nama" oninput="updatePreview()" />
+                  <div class="minum-time-range"><input class="control minum-jam" id="minum-malam-jam-awal" type="time" value="21:00" oninput="updatePreview()" title="Jam awal" /><input class="control minum-jam" id="minum-malam-jam-akhir" type="time" value="22:00" oninput="updatePreview()" title="Jam akhir" /></div>
+                  <input class="control minum-jumlah" id="minum-malam-jumlah" type="text" inputmode="decimal" placeholder="1" oninput="updatePreview()" />
+                  <input class="control minum-satuan" id="minum-malam-satuan" type="text" value="Tab/Caps/Bks" placeholder="Tab/Caps/Bks" oninput="updatePreview()" />
+                </div>
+                <div class="minum-dose-control" id="minum-dini-control">
+                  <input type="checkbox" class="minum-time-check minum-row-check" id="minum-dini" onchange="updatePreview()" title="Tampilkan baris ini" />
+                  <input class="control minum-nama-waktu" id="minum-dini-label" type="text" value="Pagi" placeholder="Nama" oninput="updatePreview()" />
+                  <div class="minum-time-range"><input class="control minum-jam" id="minum-dini-jam-awal" type="time" value="02:00" oninput="updatePreview()" title="Jam awal" /><input class="control minum-jam" id="minum-dini-jam-akhir" type="time" value="03:00" oninput="updatePreview()" title="Jam akhir" /></div>
+                  <input class="control minum-jumlah" id="minum-dini-jumlah" type="text" inputmode="decimal" placeholder="1" oninput="updatePreview()" />
+                  <input class="control minum-satuan" id="minum-dini-satuan" type="text" value="Tab/Caps/Bks" placeholder="Tab/Caps/Bks" oninput="updatePreview()" />
+                </div>
+              </div>
+              <div class="form-grid etiket-minum-fields" id="etiket-minum-fields" hidden>
+                <div class="field">
+                  <label for="etiket-tgl-minum">Tanggal Minum</label>
+                  <input class="control" id="etiket-tgl-minum" type="date" oninput="updatePreview()" />
+                </div>
+                <div class="field">
+                  <label>Jam Minum</label>
+                  <div class="minum-time-range">
+                    <input class="control" id="etiket-minum-jam-awal" type="time" value="06:00" oninput="updatePreview()" title="Jam awal" />
+                    <input class="control" id="etiket-minum-jam-akhir" type="time" value="07:00" oninput="updatePreview()" title="Jam akhir" />
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="etiket-waktu-minum">Nama Waktu</label>
+                  <input class="control" id="etiket-waktu-minum" type="text" value="Pagi" placeholder="Contoh: Pagi" oninput="updatePreview()" />
+                </div>
+              </div>
+              <div class="obat-luar-fields" id="obat-luar-fields" hidden>
+                <div class="field">
+                  <label for="obat-luar-cara-pakai">Cara Pakai</label>
+                  <input class="control" id="obat-luar-cara-pakai" type="text" placeholder="Contoh: Oleskan tipis pada bagian yang sakit" oninput="updatePreview()" />
+                </div>
+              </div>
+              <div class="form-grid instruksi-fields" id="instruksi-fields" hidden>
+                <div class="field">
+                  <label for="instruksi-tgl-minum">Tanggal Minum</label>
+                  <input class="control" id="instruksi-tgl-minum" type="date" oninput="updatePreview()" />
+                </div>
+                <div class="field">
+                  <label for="instruksi-utama">Instruksi Utama</label>
+                  <input class="control" id="instruksi-utama" type="text" value="DIMINUM 2 TAB TIAP DIARE" oninput="updatePreview()" />
+                </div>
+                <div class="field">
+                  <label for="instruksi-maksimal">Batas Harian</label>
+                  <input class="control" id="instruksi-maksimal" type="text" value="Maksimal 10 tab / Hari" oninput="updatePreview()" />
+                </div>
+              </div>
+              <div class="form-grid-2">
+                <div class="field" id="minum-aturan-field">
+                  <label id="minum-aturan-label" for="minum-interval-note">Interval / Catatan Waktu</label>
+                  <input class="control" id="minum-interval-note" type="text" value="15; 30 menit; 1; 2 jam" placeholder="Tulis catatan waktu manual" oninput="updatePreview()" />
+                </div>
+                <div class="field" id="minum-meal-field">
+                  <label>Hubungan Makan</label>
+                  <div class="minum-meal-options">
+                    <label><input type="checkbox" class="minum-meal-check" id="meal-sebelum" value="Sebelum" onchange="updatePreview()" /> Sebelum</label>
+                    <label><input type="checkbox" class="minum-meal-check" id="meal-sesudah" value="Sesudah" onchange="updatePreview()" /> Sesudah</label>
+                    <label id="meal-saat-option"><input type="checkbox" class="minum-meal-check" id="meal-saat" value="Saat" onchange="updatePreview()" /> Saat makan</label>
+                  </div>
+                </div>
+              </div>
+              <div class="field" id="minum-marker-field">
+                <label>Tanda Pilihan Hubungan Makan</label>
+                <div class="minum-marker-options">
+                  <label><input type="radio" name="minum-meal-marker" value="circle" checked onchange="updatePreview()" /> Lingkari</label>
+                  <label><input type="radio" name="minum-meal-marker" value="cross" onchange="updatePreview()" /> Silang/Coret</label>
+                </div>
+              </div>
+            </div>          </div>
+        </section>
+
+        <section id="pasien" class="section-view">
+          <div class="card">
+            <div class="card-head">
+              <h2>Data Pasien & RM</h2>
+              <div class="header-actions">
+                <button class="btn btn-soft" type="button" onclick="openMasterModal('pasien')"><i class="fa-solid fa-plus"></i> Tambah</button>
+                <input type="file" id="excel-pasien-input" accept=".xlsx,.xls,.csv" hidden onchange="importPasienExcel(event)" />
+                <button class="btn btn-primary" type="button" onclick="document.getElementById('excel-pasien-input').click()"><i class="fa-solid fa-file-excel"></i> Import Excel</button>
+                <button class="btn btn-warning" type="button" onclick="exportMasterDataExcel('pasien')"><i class="fa-solid fa-file-export"></i> Export Excel</button>
+              </div>
+            </div>
+            <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><input class="control" id="search-pasien" type="text" placeholder="Cari nama atau No. RM..." oninput="searchTable('pasien-table','search-pasien')" /></div>
+            <div class="table-wrap">
+              <table id="pasien-table">
+                <thead><tr><th class="selection-col"><input class="master-check-all" id="head-check-all-pasien" type="checkbox" onchange="toggleSelectAllVisible('pasien',this.checked)" aria-label="Pilih semua pasien di halaman ini" /></th><th>No. RM</th><th>Nama Pasien</th><th class="action-col-wide">Aksi</th></tr></thead>
+                <tbody id="tbody-pasien"></tbody>
+              </table>
+            </div>
+            <div class="master-table-footer" id="footer-pasien" hidden>
+              <div class="bulk-actions">
+                <label class="check-all-label"><input class="master-check-all" id="check-all-pasien" type="checkbox" onchange="toggleSelectAllVisible('pasien',this.checked)" /> Pilih semua di halaman ini</label>
+                <span class="selected-count" id="selected-count-pasien">0 data dipilih</span>
+                <button class="btn btn-danger btn-sm" id="btn-hapus-terpilih-pasien" type="button" onclick="deleteSelectedMasterData('pasien')" disabled><i class="fa-solid fa-trash"></i> Hapus Terpilih</button>
+              </div>
+              <div class="pagination-controls">
+                <span class="pagination-info" id="pagination-info-pasien"></span>
+                <div class="pagination-buttons">
+                  <button class="pagination-btn" id="pagination-prev-pasien" type="button" onclick="changeMasterPage('pasien','prev')" title="Halaman sebelumnya">Prev</button>
+                  <span class="pagination-buttons" id="pagination-pages-pasien"></span>
+                  <button class="pagination-btn" id="pagination-next-pasien" type="button" onclick="changeMasterPage('pasien','next')" title="Halaman berikutnya">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="obat" class="section-view">
+          <div class="card">
+            <div class="card-head">
+              <h2>Data Obat</h2>
+              <div class="header-actions">
+                <button class="btn btn-soft" type="button" onclick="openMasterModal('obat')"><i class="fa-solid fa-plus"></i> Tambah</button>
+                <input type="file" id="excel-obat-input" accept=".xlsx,.xls,.csv" hidden onchange="importObatExcel(event)" />
+                <button class="btn btn-primary" type="button" onclick="document.getElementById('excel-obat-input').click()"><i class="fa-solid fa-file-excel"></i> Import Excel</button>
+                <button class="btn btn-warning" type="button" onclick="exportMasterDataExcel('obat')"><i class="fa-solid fa-file-export"></i> Export Excel</button>
+              </div>
+            </div>
+            <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><input class="control" id="search-obat" type="text" placeholder="Cari nama obat..." oninput="searchTable('obat-table','search-obat')" /></div>
+            <div class="table-wrap">
+              <table id="obat-table">
+                <thead><tr><th class="selection-col"><input class="master-check-all" id="head-check-all-obat" type="checkbox" onchange="toggleSelectAllVisible('obat',this.checked)" aria-label="Pilih semua obat di halaman ini" /></th><th>Nama Obat</th><th class="action-col-wide">Aksi</th></tr></thead>
+                <tbody id="tbody-obat"></tbody>
+              </table>
+            </div>
+            <div class="master-table-footer" id="footer-obat" hidden>
+              <div class="bulk-actions">
+                <label class="check-all-label"><input class="master-check-all" id="check-all-obat" type="checkbox" onchange="toggleSelectAllVisible('obat',this.checked)" /> Pilih semua di halaman ini</label>
+                <span class="selected-count" id="selected-count-obat">0 data dipilih</span>
+                <button class="btn btn-danger btn-sm" id="btn-hapus-terpilih-obat" type="button" onclick="deleteSelectedMasterData('obat')" disabled><i class="fa-solid fa-trash"></i> Hapus Terpilih</button>
+              </div>
+              <div class="pagination-controls">
+                <span class="pagination-info" id="pagination-info-obat"></span>
+                <div class="pagination-buttons">
+                  <button class="pagination-btn" id="pagination-prev-obat" type="button" onclick="changeMasterPage('obat','prev')" title="Halaman sebelumnya">Prev</button>
+                  <span class="pagination-buttons" id="pagination-pages-obat"></span>
+                  <button class="pagination-btn" id="pagination-next-obat" type="button" onclick="changeMasterPage('obat','next')" title="Halaman berikutnya">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="poli" class="section-view">
+          <div class="card">
+            <div class="card-head">
+              <h2>Data Poli / Ruangan</h2>
+              <div class="header-actions">
+                <button class="btn btn-soft" type="button" onclick="openMasterModal('poli')"><i class="fa-solid fa-plus"></i> Tambah</button>
+                <input type="file" id="excel-poli-input" accept=".xlsx,.xls,.csv" hidden onchange="importPoliExcel(event)" />
+                <button class="btn btn-primary" type="button" onclick="document.getElementById('excel-poli-input').click()"><i class="fa-solid fa-file-excel"></i> Import Excel</button>
+                <button class="btn btn-warning" type="button" onclick="exportMasterDataExcel('poli')"><i class="fa-solid fa-file-export"></i> Export Excel</button>
+              </div>
+            </div>
+            <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><input class="control" id="search-poli" type="text" placeholder="Cari ruangan..." oninput="searchTable('poli-table','search-poli')" /></div>
+            <div class="table-wrap">
+              <table id="poli-table">
+                <thead><tr><th class="selection-col"><input class="master-check-all" id="head-check-all-poli" type="checkbox" onchange="toggleSelectAllVisible('poli',this.checked)" aria-label="Pilih semua poli di halaman ini" /></th><th>Ruangan</th><th class="action-col-wide">Aksi</th></tr></thead>
+                <tbody id="tbody-poli"></tbody>
+              </table>
+            </div>
+            <div class="master-table-footer" id="footer-poli" hidden>
+              <div class="bulk-actions">
+                <label class="check-all-label"><input class="master-check-all" id="check-all-poli" type="checkbox" onchange="toggleSelectAllVisible('poli',this.checked)" /> Pilih semua di halaman ini</label>
+                <span class="selected-count" id="selected-count-poli">0 data dipilih</span>
+                <button class="btn btn-danger btn-sm" id="btn-hapus-terpilih-poli" type="button" onclick="deleteSelectedMasterData('poli')" disabled><i class="fa-solid fa-trash"></i> Hapus Terpilih</button>
+              </div>
+              <div class="pagination-controls">
+                <span class="pagination-info" id="pagination-info-poli"></span>
+                <div class="pagination-buttons">
+                  <button class="pagination-btn" id="pagination-prev-poli" type="button" onclick="changeMasterPage('poli','prev')" title="Halaman sebelumnya">Prev</button>
+                  <span class="pagination-buttons" id="pagination-pages-poli"></span>
+                  <button class="pagination-btn" id="pagination-next-poli" type="button" onclick="changeMasterPage('poli','next')" title="Halaman berikutnya">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="label-instansi" class="section-view">
+          <div class="card">
+            <div class="card-head"><h2><i class="fa-solid fa-hospital"></i> Label Instansi</h2></div>
+            <span class="section-label"><i class="fa-solid fa-image"></i> Logo Instansi</span>
+            <div class="field">
+              <label>Upload Logo</label>
+              <div class="logo-upload" onclick="document.getElementById('logo-file-input').click()">
+                <div id="logo-placeholder"><i class="fa-solid fa-cloud-arrow-up" style="font-size:2rem;"></i><br />Klik untuk upload logo<br /><small>PNG, JPG, SVG maks. 500KB</small></div>
+                <div id="logo-preview-container" hidden><img id="logo-preview-img" alt="Logo Preview" /><small>Klik untuk ganti logo</small></div>
+              </div>
+              <input type="file" id="logo-file-input" accept="image/*" hidden onchange="handleLogoUpload(event)" />
+            </div>
+            <div class="header-actions" style="justify-content:flex-start;margin-bottom:1rem;">
+              <button class="btn btn-danger" id="btn-remove-logo" type="button" onclick="removeLogo()" hidden><i class="fa-solid fa-trash"></i> Hapus Logo</button>
+            </div>
+
+            <span class="section-label"><i class="fa-solid fa-building-columns"></i> Informasi Instansi</span>
+            <div class="field"><label for="instansi-unit-name">Nama Instalasi / Unit</label><input class="control" id="instansi-unit-name" type="text" placeholder="Masukkan nama instalasi / unit" /></div>
+            <div class="field"><label for="instansi-rs-name">Nama Rumah Sakit</label><input class="control" id="instansi-rs-name" type="text" placeholder="Masukkan nama rumah sakit" /></div>
+            <div class="field"><label for="instansi-rs-address">Alamat RS</label><input class="control" id="instansi-rs-address" type="text" placeholder="Opsional" /></div>
+            <div class="form-grid-2">
+              <div class="field"><label for="instansi-apoteker">Nama Apoteker</label><input class="control" id="instansi-apoteker" type="text" placeholder="Opsional" /></div>
+              <div class="field"><label for="instansi-sipa">No. SIPA</label><input class="control" id="instansi-sipa" type="text" placeholder="Opsional" /></div>
+            </div>
+            <button class="btn btn-primary" type="button" onclick="saveInstansiSettings()"><i class="fa-solid fa-save"></i> Simpan Label Instansi</button>
+          </div>
+        </section>
+
+        <section id="print-settings" class="section-view">
+          <div class="card">
+            <div class="card-head">
+              <h2>Preview & Cetak Etiket</h2>
+              <button class="btn btn-muted" type="button" onclick="showSection('cetak-etiket')"><i class="fa-solid fa-pen"></i> Edit Data</button>
+            </div>
+            <div class="print-layout">
+              <div class="print-controls">
+                <h3 style="margin:0 0 .8rem;">Pilih Mode Cetak</h3>
+                <div id="print-validation-warning" class="warning-box"></div>
+                <div class="print-mode-buttons">
+                  <button class="print-mode-btn" id="mode-landscape" type="button" onclick="selectPrintMode('landscape')"><i class="fa-solid fa-print"></i> Cetak Label Landcape</button>
+                  <button class="print-mode-btn" id="mode-portrait" type="button" onclick="selectPrintMode('portrait')"><i class="fa-solid fa-print"></i> Cetak Label Potrait</button>
+                  <button class="print-mode-btn" id="mode-minum-rs" type="button" onclick="selectPrintMode('minum-rs')"><i class="fa-solid fa-prescription-bottle-medical"></i> <span id="mode-minum-rs-label">Label Etiket OBAT</span></button>
+                </div>
+                <div class="field" id="landscape-presets">
+                  <label>Preset Label Landcape</label>
+                  <div class="preset-row">
+                    <button class="preset-btn" type="button" onclick="setLandscapePreset(75,50,this)">75 x 50mm</button>
+                    <button class="preset-btn" type="button" onclick="setLandscapePreset(80,50,this)">80 x 50mm</button>
+                    <button class="preset-btn" type="button" onclick="setLandscapePreset(90,50,this)">90 x 50mm</button>
+                  </div>
+                </div>
+                <div class="field" id="portrait-presets" hidden>
+                  <label>Preset Label Potrait</label>
+                  <div class="preset-row">
+                    <button class="preset-btn" type="button" onclick="setPortraitPreset(72,120,this)">72 x 120mm</button>
+                    <button class="preset-btn" type="button" onclick="setPortraitPreset(80,120,this)">80 x 120mm</button>
+                    <button class="preset-btn" type="button" onclick="setPortraitPreset(80,120,this)">90 x 120mm</button>
+                  </div>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="field"><label for="label-width">Lebar (mm)</label><input class="control" id="label-width" type="number" min="35" max="160" value="75" onchange="updateManualSize()" /></div>
+                  <div class="field"><label for="label-height">Tinggi (mm)</label><input class="control" id="label-height" type="number" min="25" max="220" value="50" onchange="updateManualSize()" /></div>
+                </div>
+                <button class="btn btn-warning btn-full" type="button" onclick="printSelectedLabel()"><i class="fa-solid fa-print"></i> Print Label Yang Dipilih</button>
+              </div>
+
+              <div class="print-preview">
+                <div id="print-preview-empty" class="preview-empty">Preview belum ditampilkan. Pilih mode cetak untuk melihat label.</div>
+
+                <div id="printable-area-landscape" class="label-landscape">
+                  <div class="l-head">
+                    <div class="l-logo" id="label75-logo"><i class="fa-solid fa-heart-pulse"></i></div>
+                    <div class="l-title">
+                      <span class="l-unit" id="label75-instansi-name">INSTALASI FARMASI</span>
+                      <span class="l-rs" id="label75-rs-name">NAMA RUMAH SAKIT</span>
+                    </div>
+                  </div>
+                  <div class="l-patient">
+                    <div class="l-name" id="label75-nama">NAMA PASIEN</div>
+                    <div class="l-rm">NO REKAM MEDIS<span id="label75-norm">-</span></div>
+                  </div>
+                  <div class="solid"></div>
+                  <div class="l-row"><strong>TANGGAL RESEP</strong><span><strong id="label75-tgl-resep">-</strong></span></div>
+                  <div class="dash"></div>
+                  <div class="l-row"><strong>NO. RESEP / NO SO</strong><span><strong id="label75-no-resep">-</strong></span></div>
+                  <div class="dash"></div>
+                  <div class="l-row"><strong>RUANGAN</strong><span><strong id="label75-poli">-</strong></span></div>
+                  <div class="solid"></div>
+                  <div class="l-drug" id="label75-obat">NAMA OBAT</div>
+                  <div class="l-qty"><div>QTY: <span id="label75-qty">-</span></div><div>ED / BUD: <span id="label75-bud"></span></div></div>
+                  <div class="solid"></div>
+                  <div class="l-rule" id="label75-aturan-minum">-</div>
+                  <div class="l-note" id="label75-pakai"></div>
+                  <div class="l-alert">OBAT INI TIDAK BOLEH DIBERIKAN TANPA RESEP DOKTER</div>
+                </div>
+
+                <div id="printable-area-portrait" class="thermal-label">
+                  <div class="lbl-rs-header">
+                    <div class="lbl-rs-logo" id="preview-logo">
+                      <i class="fa-solid fa-hospital"></i>
+                    </div>
+                    <div class="lbl-rs-info">
+                      <span class="lbl-rs-name" id="preview-instansi-name">INSTALASI FARMASI</span>
+                      <span class="lbl-rs-hospital" id="preview-rs-name">NAMA RUMAH SAKIT</span>
+                      <span class="lbl-rs-address" id="preview-rs-address"></span>
+                      <span class="lbl-rs-apoteker" id="preview-apoteker"></span>
+                      <span class="lbl-rs-apoteker" id="preview-sipa"></span>
+                    </div>
+                  </div>
+
+                  <div class="lbl-barcode-row">
+                    <svg id="barcode" class="lbl-barcode-img"></svg>
+                    <div class="lbl-norm-label">
+                      NO REKAM MEDIS<span id="preview-norm">-</span>
+                    </div>
+                  </div>
+
+                  <div class="solid"></div>
+                  <div class="lbl-patient-name" id="preview-nama">NAMA PASIEN</div>
+                  <div class="solid"></div>
+
+                  <div class="lbl-data-row">
+                    <span class="lbl-data-key">NO. REGISTRASI</span>
+                    <span class="lbl-data-val" id="preview-no-registrasi">-</span>
+                  </div>
+                  <div class="dash"></div>
+                  <div class="lbl-data-row">
+                    <span class="lbl-data-key">TANGGAL RESEP</span>
+                    <span class="lbl-data-val" id="preview-tgl-resep">-</span>
+                  </div>
+                  <div class="dash"></div>
+                  <div class="lbl-data-row">
+                    <span class="lbl-data-key">NO RESEP / NO SO</span>
+                    <span class="lbl-data-val" id="preview-no-resep">-</span>
+                  </div>
+                  <div class="dash"></div>
+                  <div class="lbl-data-row">
+                    <span class="lbl-data-key">RUANGAN</span>
+                    <span class="lbl-data-val" id="preview-poli">-</span>
+                  </div>
+                  <div class="solid"></div>
+
+                  <div class="lbl-drug-name" id="preview-obat">NAMA OBAT</div>
+
+                  <div class="lbl-qty-bud">
+                    <div>QTY: <span id="preview-qty">-</span></div>
+                    <div style="margin-left: 8mm">ED / BUD: <span id="preview-bud"></span></div>
+                  </div>
+                  <div class="solid"></div>
+
+                  <div class="lbl-aturan-minum" id="preview-aturan-minum">-</div>
+                  <div class="lbl-aturan-pakai" id="preview-pakai"></div>
+                  <div class="solid"></div>
+
+                  <div class="lbl-warning">
+                    OBAT INI TIDAK BOLEH DIBERIKAN<br />TANPA RESEP DOKTER
+                  </div>
+                </div>
+
+                <div id="printable-area-minum-rs" class="label-minum-rs">
+                  <div class="minum-standard-template">
+                    <div class="minum-header">
+                      <div class="minum-title" id="minum-label-instansi">INSTALASI FARMASI</div>
+                      <div class="minum-subtitle" id="minum-label-rs">NAMA RUMAH SAKIT</div>
+                      <div class="minum-apoteker" id="minum-label-apoteker">Apoteker: ........</div>
+                    </div>
+                    <div class="minum-top-row">
+                      <div class="minum-field-line"><strong>Tgl DISIAPKAN :</strong><span class="minum-value" id="minum-label-tgl">........</span></div>
+                      <div class="minum-field-line"><strong>NO RM :</strong><span class="minum-value" id="minum-label-norm">........</span></div>
+                    </div>
+                    <div class="minum-patient-row" id="minum-patient-line"><strong class="minum-patient-label">Tn/Ny/Sdr : </strong><span class="minum-value" id="minum-label-nama">........</span></div>
+                    <div class="minum-drug-line" id="minum-drug-line"><span class="minum-drug-label">NAMA OBAT DAN DOSIS : </span><span class="minum-drug-value" id="minum-label-obat">........</span></div>
+                    <div class="minum-ed">TANGGAL ED: <span id="minum-label-ed">........</span></div>
+                    <div class="minum-usage-title">CARA PAKAI DIMINUM</div>
+                    <div class="minum-dose-list" id="minum-label-dose-list"></div>
+                    <div class="minum-bottom-note" id="minum-label-interval">15; 30 menit; 1; 2 jam</div>
+                    <div class="minum-meal-line" id="minum-label-makan">Sebelum/Sesudah/Saat makan</div>
+                  </div>
+
+                  <div class="minum-high-alert-template">
+                    <div class="mha-header">
+                      <div class="mha-instansi" id="mha-label-instansi">INSTALASI FARMASI</div>
+                      <div class="mha-rs" id="mha-label-rs">NAMA RUMAH SAKIT</div>
+                      <div class="mha-apoteker" id="mha-label-apoteker">Apoteker : ........</div>
+                    </div>
+                    <div class="mha-body">
+                      <div class="mha-top-row">
+                        <div class="mha-line"><span>Tgl. DISIAPKAN :</span><span class="mha-fill" id="mha-label-tgl">........</span></div>
+                        <div class="mha-line mha-norm-line"><span>No.RM :</span><span class="mha-fill" id="mha-label-norm">........</span></div>
+                      </div>
+                      <div class="mha-patient-line">
+                        <span>Tn/Ny/Sdr :</span>
+                        <span class="mha-fill" id="mha-label-nama">........</span>
+                      </div>
+                      <div class="mha-dose-list" id="mha-label-dose-list"></div>
+                      <div class="mha-alert-note" id="mha-label-aturan">15 MENIT SEBELUM MAKAN</div>
+                    </div>
+                    <div class="mha-alert-bar">HIGH ALERT</div>
+                  </div>
+
+                  <div class="minum-etiket-template">
+                    <div class="etiket-header">
+                      <span class="etiket-instansi" id="etiket-label-instansi">INSTALASI FARMASI</span>
+                      <span class="etiket-rs" id="etiket-label-rs">NAMA RUMAH SAKIT</span>
+                    </div>
+                    <div class="etiket-body">
+                      <div class="etiket-prepared-row">
+                        <span class="etiket-prepared-date">TGL DISIAPKAN : <span id="etiket-label-tgl-disiapkan">........</span></span>
+                        <span class="etiket-prepared-norm">NO RM : <span id="etiket-label-norm">........</span></span>
+                      </div>
+                      <div class="etiket-drink-date">TANGGAL MINUM : <span id="etiket-label-tgl-minum">........</span></div>
+                      <div class="etiket-name-row">
+                        <span>NAMA :</span>
+                        <span class="etiket-value" id="etiket-label-nama">........</span>
+                      </div>
+                      <div class="etiket-drug-block">
+                        <span class="etiket-drug-label">NAMA SEDIAAN DAN DOSIS : </span>
+                        <span class="etiket-drug-value" id="etiket-label-obat">........</span>
+                      </div>
+                      <div class="etiket-expiry">TGL KADALUWARSA : <span id="etiket-label-ed">........</span></div>
+                      <div class="etiket-drink-time">JAM MINUM : <span id="etiket-label-jam-minum">06.00/07.00</span> <span id="etiket-label-waktu-minum">PAGI</span></div>
+                      <div class="etiket-meal-line" id="etiket-label-makan">SEBELUM/SETELAH MAKAN</div>
+                    </div>
+                  </div>
+
+                  <div class="minum-obat-luar-template">
+                    <div class="obat-luar-header">
+                      <span class="obat-luar-header-line" data-fit-text id="obat-luar-label-instansi">INSTALASI FARMASI</span>
+                      <span class="obat-luar-header-line" data-fit-text id="obat-luar-label-rs">NAMA RUMAH SAKIT</span>
+                      <span class="obat-luar-header-line" data-fit-text id="obat-luar-label-apoteker">Apoteker : ........</span>
+                    </div>
+                    <div class="obat-luar-body" data-fit-text>
+                      <div class="obat-luar-meta-row">
+                        <span class="obat-luar-meta-date">TGL DISIAPKAN : <span id="obat-luar-label-tgl">........</span></span>
+                        <span class="obat-luar-meta-norm">NO RM : <span id="obat-luar-label-norm">........</span></span>
+                      </div>
+                      <div class="obat-luar-row">NAMA : <span id="obat-luar-label-nama">........</span></div>
+                      <div class="obat-luar-row">NAMA OBAT DAN DOSIS : <span id="obat-luar-label-obat">........</span></div>
+                      <div class="obat-luar-row">TANGGAL ED : <span id="obat-luar-label-ed">........</span></div>
+                      <div class="obat-luar-row">CARA PAKAI : <span id="obat-luar-label-cara-pakai">........</span></div>
+                    </div>
+                    <div class="obat-luar-footer" data-fit-text>OBAT LUAR</div>
+                  </div>
+
+                  <div class="minum-instruksi-template">
+                    <div class="instruksi-header">
+                      <span class="instruksi-header-line" data-fit-text id="instruksi-label-instansi">INSTALASI FARMASI</span>
+                      <span class="instruksi-header-line" data-fit-text id="instruksi-label-rs">NAMA RUMAH SAKIT</span>
+                      <span class="instruksi-header-line" data-fit-text id="instruksi-label-apoteker">Apt : ........</span>
+                    </div>
+                    <div class="instruksi-body" data-fit-text>
+                      <div class="instruksi-meta-row">
+                        <span class="instruksi-meta-date">TGL DISIAPKAN : <span id="instruksi-label-tgl-disiapkan">........</span></span>
+                        <span class="instruksi-meta-norm">NO RM : <span id="instruksi-label-norm">........</span></span>
+                      </div>
+                      <div class="instruksi-row">TANGGAL MINUM : <span id="instruksi-label-tgl-minum">........</span></div>
+                      <div class="instruksi-row">NAMA : <span id="instruksi-label-nama">........</span></div>
+                      <div class="instruksi-row">NAMA SEDIAAN : <span id="instruksi-label-obat">........</span></div>
+                    </div>
+                    <div class="instruksi-main" data-fit-text id="instruksi-label-utama">DIMINUM 2 TAB TIAP DIARE</div>
+                    <div class="instruksi-max" data-fit-text id="instruksi-label-maksimal">Maksimal 10 tab / Hari</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="system" class="section-view">
+          <div class="card" style="max-width: 620px;">
+            <div class="card-head"><h2>Pengaturan Sistem</h2></div>
+            <div class="form-grid-2">
+              <div class="field"><label for="system-name">Nama Admin</label><input class="control" id="system-name" type="text" value="Admin" /></div>
+              <div class="field"><label for="system-info">Jabatan</label><input class="control" id="system-info" type="text" value="Apoteker" /></div>
+            </div>
+            <button class="btn btn-primary" type="button" onclick="saveSystemSettings()"><i class="fa-solid fa-save"></i> Simpan Perubahan</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="master-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="master-modal-title">
+      <div class="modal-head">
+        <h3 id="master-modal-title">Tambah Data</h3>
+        <button class="btn btn-muted btn-icon" type="button" onclick="closeMasterModal()" title="Tutup"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="master-form">
+        <input type="hidden" id="master-type" />
+        <input type="hidden" id="master-edit-id" value="" />
+        <div id="master-fields"></div>
+        <div class="modal-actions">
+          <button class="btn btn-muted" type="button" onclick="closeMasterModal()">Batal</button>
+          <button class="btn btn-primary" type="submit"><i class="fa-solid fa-save"></i> Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="confirm-modal">
+    <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-message">
+      <div class="confirm-modal-content">
+        <div class="confirm-modal-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+          <h3 id="confirm-modal-title">Konfirmasi</h3>
+          <p id="confirm-modal-message"></p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-muted" id="confirm-modal-cancel" type="button" onclick="closeConfirmDialog(false)">Batal</button>
+        <button class="btn btn-danger" id="confirm-modal-ok" type="button" onclick="closeConfirmDialog(true)">Hapus</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
